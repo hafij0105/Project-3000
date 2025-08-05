@@ -99,7 +99,7 @@ app.get("/api/placeholder/:width/:height", (req, res) => {
 
   app.post("/api/posts/:id/like", async (req, res) => {
   const postId = parseInt(req.params.id);
-  const { userId } = req.body; // make sure you pass this from frontend
+  const { userId } = req.body; 
 
   if (!userId) {
     return res.status(400).json({ message: "User ID is required" });
@@ -148,6 +148,76 @@ app.get("/api/placeholder/:width/:height", (req, res) => {
     const userId = parseInt(req.params.userId);
     const friends = await storage.getFriendsByUserId(userId);
     res.json(friends);
+  });
+
+  app.get("/api/friends", async (req, res) => {
+    const currentUser = req.query.userId ? parseInt(req.query.userId as string) : 1;
+    const friends = await storage.getFriendsByUserId(currentUser);
+    res.json(friends);
+  });
+
+  app.post("/api/friends/request", async (req, res) => {
+    try {
+      const { fromUserId, toUserId } = req.body;
+      const request = await storage.sendFriendRequest(fromUserId, toUserId);
+      res.json(request);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.post("/api/friends/accept", async (req, res) => {
+    try {
+      const { fromUserId, toUserId } = req.body;
+      await storage.acceptFriendRequest(fromUserId, toUserId);
+      res.json({ message: "Friend request accepted" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.post("/api/friends/reject", async (req, res) => {
+    try {
+      const { fromUserId, toUserId } = req.body;
+      await storage.rejectFriendRequest(fromUserId, toUserId);
+      res.json({ message: "Friend request rejected" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.delete("/api/friends/:userId/:friendId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const friendId = parseInt(req.params.friendId);
+      await storage.removeFriend(userId, friendId);
+      res.json({ message: "Friend removed" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  app.get("/api/friends/suggestions/:userId", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const suggestions = await storage.getFriendSuggestions(userId);
+    res.json(suggestions);
+  });
+
+  app.get("/api/friends/requests/:userId", async (req, res) => {
+    const userId = parseInt(req.params.userId);
+    const requests = await storage.getFriendRequests(userId);
+    res.json(requests);
+  });
+
+  app.delete("/api/friends/suggestions/:userId/:suggestionId", async (req, res) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const suggestionId = parseInt(req.params.suggestionId);
+      await storage.removeSuggestion(userId, suggestionId);
+      res.json({ message: "Suggestion removed" });
+    } catch (error) {
+      res.status(400).json({ message: "Invalid request" });
+    }
   });
 
   const httpServer = createServer(app);

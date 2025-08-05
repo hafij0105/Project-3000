@@ -85,3 +85,10 @@ export type Post = typeof posts.$inferSelect;
 export type Chat = typeof chats.$inferSelect;
 export type Notification = typeof notifications.$inferSelect;
 export type Friendship = typeof friendships.$inferSelect;
+export type FriendRequest = {
+  id: number;
+  fromUserId: number;
+  toUserId: number;
+  status: 'pending' | 'accepted' | 'rejected';
+  timestamp: string;
+};

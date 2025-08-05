@@ -16,7 +16,9 @@ export interface IStorage {
   // Posts
   getPosts(): Promise<(Post & { user: User })[]>;
   createPost(userId: number, post: InsertPost): Promise<Post>;
-  likePost(postId: number): Promise<void>;
+  likePost(userId: number, postId: number): Promise<void>;
+  unlikePost(userId: number, postId: number): Promise<void>;
+  hasUserLikedPost(userId: number, postId: number): Promise<boolean>;
   
   // Chats
   getChatsByUserId(userId: number): Promise<(Chat & { fromUser: User; toUser: User })[]>;
@@ -28,6 +30,13 @@ export interface IStorage {
   
   // Friends
   getFriendsByUserId(userId: number): Promise<User[]>;
+  sendFriendRequest(fromUserId: number, toUserId: number): Promise<any>;
+  acceptFriendRequest(fromUserId: number, toUserId: number): Promise<void>;
+  rejectFriendRequest(fromUserId: number, toUserId: number): Promise<void>;
+  removeFriend(userId: number, friendId: number): Promise<void>;
+  getFriendSuggestions(userId: number): Promise<User[]>;
+  getFriendRequests(userId: number): Promise<any[]>;
+  removeSuggestion(userId: number, suggestionId: number): Promise<void>;
 }
 
 export class MemStorage implements IStorage {
@@ -205,20 +214,34 @@ export class MemStorage implements IStorage {
       userId: 1,
       type: "general",
       content: "Reminder: Tech Symposium tomorrow at 2 PM",
+      fromUserId: null,
       timestamp: "3 hours ago",
+      isRead: false
+    };
+
+    // Add a friend request notification
+    const notification4: Notification = {
+      id: 4,
+      userId: 1,
+      type: "friend_request",
+      content: "sent you a friend request",
+      fromUserId: 4, // Aarav Sharma
+      timestamp: "1 hour ago",
       isRead: false
     };
 
     this.notifications.set(1, notification1);
     this.notifications.set(2, notification2);
     this.notifications.set(3, notification3);
-    this.currentNotificationId = 4;
+    this.notifications.set(4, notification4);
+    this.currentNotificationId = 5;
 
-    // Create sample friendships
+    // Create sample friendships - only 2 friends for user 1
     const friendship1: Friendship = { id: 1, userId: 1, friendId: 2 };
     const friendship2: Friendship = { id: 2, userId: 1, friendId: 3 };
-    const friendship3: Friendship = { id: 3, userId: 1, friendId: 4 };
-    const friendship4: Friendship = { id: 4, userId: 1, friendId: 5 };
+    // Also create reverse friendships
+    const friendship3: Friendship = { id: 3, userId: 2, friendId: 1 };
+    const friendship4: Friendship = { id: 4, userId: 3, friendId: 1 };
 
     this.friendships.set(1, friendship1);
     this.friendships.set(2, friendship2);
@@ -247,7 +270,9 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id,
       profileImage: "assets/9.jpg",
-      course: "Computer Science"
+      course: "Computer Science",
+      email: insertUser.email || null,
+      birthday: insertUser.birthday || null
     };
     this.users.set(id, user);
     return user;
@@ -282,18 +307,12 @@ export class MemStorage implements IStorage {
       userId,
       likes: 0,
       comments: 0,
-      timestamp: "now"
+      timestamp: "now",
+      mediaType: insertPost.mediaType || null,
+      mediaUrl: insertPost.mediaUrl || null
     };
     this.posts.set(id, post);
     return post;
-  }
-
-  async likePost(postId: number): Promise<void> {
-    const post = this.posts.get(postId);
-    if (post) {
-      post.likes = (post.likes || 0) + 1;
-      this.posts.set(postId, post);
-    }
   }
 
   async getChatsByUserId(userId: number): Promise<(Chat & { fromUser: User; toUser: User })[]> {
@@ -367,6 +386,172 @@ export class MemStorage implements IStorage {
     }
     
     return friends;
+  }
+
+  async likePost(userId: number, postId: number): Promise<void> {
+    const post = this.posts.get(postId);
+    if (post) {
+      post.likes = (post.likes || 0) + 1;
+      this.posts.set(postId, post);
+    }
+  }
+
+  async unlikePost(userId: number, postId: number): Promise<void> {
+    const post = this.posts.get(postId);
+    if (post && post.likes && post.likes > 0) {
+      post.likes = post.likes - 1;
+      this.posts.set(postId, post);
+    }
+  }
+
+  async hasUserLikedPost(userId: number, postId: number): Promise<boolean> {
+    // For simplicity, we'll assume users can like posts multiple times
+    // In a real app, you'd track individual user likes
+    return false;
+  }
+
+  async sendFriendRequest(fromUserId: number, toUserId: number): Promise<any> {
+    // Check if friendship already exists
+    for (const friendship of this.friendships.values()) {
+      if ((friendship.userId === fromUserId && friendship.friendId === toUserId) ||
+          (friendship.userId === toUserId && friendship.friendId === fromUserId)) {
+        return { message: "Already friends or request pending" };
+      }
+    }
+    
+    // Check if request already exists
+    for (const notification of this.notifications.values()) {
+      if (notification.userId === toUserId && 
+          notification.fromUserId === fromUserId && 
+          notification.type === "friend_request" && 
+          !notification.isRead) {
+        return { message: "Friend request already sent" };
+      }
+    }
+    
+    // Create a notification for friend request
+    await this.createNotification(
+      toUserId,
+      "friend_request",
+      "sent you a friend request",
+      fromUserId
+    );
+    return { message: "Friend request sent" };
+  }
+
+  async acceptFriendRequest(fromUserId: number, toUserId: number): Promise<void> {
+    // Check if friendship already exists
+    for (const friendship of this.friendships.values()) {
+      if ((friendship.userId === fromUserId && friendship.friendId === toUserId) ||
+          (friendship.userId === toUserId && friendship.friendId === fromUserId)) {
+        return; // Already friends
+      }
+    }
+    
+    // Create friendship in both directions
+    const friendship1: Friendship = { 
+      id: this.currentFriendshipId++, 
+      userId: fromUserId, 
+      friendId: toUserId 
+    };
+    const friendship2: Friendship = { 
+      id: this.currentFriendshipId++, 
+      userId: toUserId, 
+      friendId: fromUserId 
+    };
+    
+    this.friendships.set(friendship1.id, friendship1);
+    this.friendships.set(friendship2.id, friendship2);
+    
+    // Mark the friend request notification as read
+    for (const notification of this.notifications.values()) {
+      if (notification.userId === toUserId && 
+          notification.fromUserId === fromUserId && 
+          notification.type === "friend_request" && 
+          !notification.isRead) {
+        notification.isRead = true;
+        break;
+      }
+    }
+    
+    // Create notification for acceptance
+    await this.createNotification(
+      fromUserId,
+      "friend_request",
+      "accepted your friend request",
+      toUserId
+    );
+  }
+
+  async rejectFriendRequest(fromUserId: number, toUserId: number): Promise<void> {
+    // Mark the friend request notification as read
+    for (const notification of this.notifications.values()) {
+      if (notification.userId === toUserId && 
+          notification.fromUserId === fromUserId && 
+          notification.type === "friend_request" && 
+          !notification.isRead) {
+        notification.isRead = true;
+        break;
+      }
+    }
+    
+    // Create notification for rejection
+    await this.createNotification(
+      fromUserId,
+      "friend_request",
+      "rejected your friend request",
+      toUserId
+    );
+  }
+
+  async removeFriend(userId: number, friendId: number): Promise<void> {
+    // Remove friendships in both directions
+    for (const [id, friendship] of this.friendships.entries()) {
+      if ((friendship.userId === userId && friendship.friendId === friendId) ||
+          (friendship.userId === friendId && friendship.friendId === userId)) {
+        this.friendships.delete(id);
+      }
+    }
+  }
+
+  async getFriendSuggestions(userId: number): Promise<User[]> {
+    const currentFriends = await this.getFriendsByUserId(userId);
+    const currentFriendIds = new Set(currentFriends.map(f => f.id));
+    
+    const suggestions: User[] = [];
+    for (const user of this.users.values()) {
+      if (user.id !== userId && !currentFriendIds.has(user.id)) {
+        suggestions.push(user);
+      }
+    }
+    
+    return suggestions.slice(0, 5); // Return top 5 suggestions
+  }
+
+  async getFriendRequests(userId: number): Promise<any[]> {
+    const requests: any[] = [];
+    for (const notification of this.notifications.values()) {
+      if (notification.userId === userId && 
+          notification.type === "friend_request" && 
+          !notification.isRead) {
+        const fromUser = this.users.get(notification.fromUserId!);
+        if (fromUser) {
+          requests.push({
+            id: notification.id,
+            fromUser,
+            timestamp: notification.timestamp
+          });
+        }
+      }
+    }
+    return requests;
+  }
+
+  async removeSuggestion(userId: number, suggestionId: number): Promise<void> {
+    // For now, we'll just return success
+    // In a real app, you might want to track removed suggestions in a separate table
+    // or modify the suggestions logic to exclude removed suggestions
+    return Promise.resolve();
   }
 }
 
