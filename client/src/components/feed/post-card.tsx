@@ -228,14 +228,14 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
           <img
             src={post.mediaUrl}
             alt="Post media"
-            className="w-full rounded-lg mb-4 object-cover max-h-96"
+            className="w-full rounded-lg mb-4 object-cover max-h-96 cursor-pointer"
           />
         );
       case "video":
         return (
           <video
             controls
-            className="w-full rounded-lg mb-4 max-h-96"
+            className="w-full rounded-lg mb-4 max-h-96 cursor-pointer"
             preload="metadata"
           >
             <source src={post.mediaUrl} type="video/mp4" />
@@ -244,7 +244,7 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
         );
       case "pdf":
         return (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 cursor-pointer ">
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
                 <FileText className="text-white" size={24} />
@@ -255,10 +255,6 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
                   2.4 MB • PDF Document
                 </p>
               </div>
-              <Button className="bg-metro-green hover:bg-metro-green-light">
-                <Download size={16} className="mr-2" />
-                Download
-              </Button>
             </div>
           </div>
         );

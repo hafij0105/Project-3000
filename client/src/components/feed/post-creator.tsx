@@ -136,112 +136,106 @@ export default function PostCreator() {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept="image/*,video/*,.pdf"
-        className="hidden"
+  <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 mb-6 w-full max-w-4xl mx-auto">
+    <input
+      type="file"
+      ref={fileInputRef}
+      onChange={handleFileChange}
+      accept="image/*,video/*,.pdf"
+      className="hidden"
+    />
+    
+    <div className="flex items-start gap-3 md:gap-4">
+      <img 
+        src={currentUser?.profileImage || "/api/placeholder/40/40"}
+        alt="Your Profile" 
+        className="w-9 h-9 md:w-10 md:h-10 rounded-full object-cover flex-shrink-0"
       />
-      
-      <div className="flex items-start space-x-4">
-        <img 
-          src={currentUser?.profileImage || "/api/placeholder/40/40"}
-          alt="Your Profile" 
-          className="w-10 h-10 rounded-full object-cover"
+      <div className="flex-1 min-w-0">
+        <Textarea
+          placeholder={`What's on your mind, ${currentUser?.fullName?.split(" ")[0]}?`}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          className="w-full bg-gray-100 rounded-2xl focus:ring-2 focus:ring-metro-green focus:bg-white border-0 text-sm md:text-base"
+          rows={3}
         />
-        <div className="flex-1">
-          <Textarea
-            placeholder={`What's on your mind, ${currentUser?.fullName?.split(" ")[0]}?`}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full bg-gray-100 rounded-2xl resize-none focus:ring-2 focus:ring-metro-green focus:bg-white border-0"
-            rows={3}
-          />
-          
-          {selectedFile && (
-            <div className="mt-3 p-3 bg-gray-50 rounded-lg">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-metro-dark">
-                  {mediaType === "image" && "📷 Photo selected"}
-                  {mediaType === "video" && "🎥 Video selected"}  
-                  {mediaType === "pdf" && "📄 PDF selected"}
-                  {isUploading && "⏳ Uploading..."}
-                </span>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={removeMedia}
-                  disabled={isUploading}
-                >
-                  Remove
-                </Button>
-              </div>
-              
-              {mediaType === "image" && (
-                <img 
-                  src={URL.createObjectURL(selectedFile)} 
-                  alt="Preview" 
-                  className="mt-2 rounded-lg max-h-48 object-cover w-full"
-                />
-              )}
-            </div>
-          )}
-          
-          <div className="flex items-center justify-between mt-4">
-            <div className="flex items-center space-x-4">
+        
+        {selectedFile && (
+          <div className="mt-3 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between flex-wrap gap-2">
+              <span className="text-sm text-metro-dark">
+                {mediaType === "image" && "📷 Photo selected"}
+                {mediaType === "video" && "🎥 Video selected"}  
+                {mediaType === "pdf" && "📄 PDF selected"}
+                {isUploading && "⏳ Uploading..."}
+              </span>
               <Button 
-                variant="ghost"
+                variant="ghost" 
                 size="sm"
-                onClick={() => triggerFileInput("image")}
-                className="flex items-center space-x-2 hover:bg-gray-100"
+                onClick={removeMedia}
+                disabled={isUploading}
+                className="ml-auto"
               >
-                <Image className="text-red-500" size={20} />
-                <span className="text-sm text-metro-dark">Photo</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                onClick={() => triggerFileInput("video")}
-                className="flex items-center space-x-2 hover:bg-gray-100"
-              >
-                <Video className="text-blue-500" size={20} />
-                <span className="text-sm text-metro-dark">Video</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                onClick={() => triggerFileInput("pdf")}
-                className="flex items-center space-x-2 hover:bg-gray-100"
-              >
-                <FileText className="text-red-600" size={20} />
-                <span className="text-sm text-metro-dark">PDF</span>
-              </Button>
-              <Button 
-                variant="ghost"
-                size="sm"
-                className="flex items-center space-x-2 hover:bg-gray-100"
-              >
-                <Smile className="text-yellow-500" size={20} />
-                <span className="text-sm text-metro-dark">Feeling</span>
+                Remove
               </Button>
             </div>
             
-            <Button 
-              onClick={handleShare}
-              disabled={createPostMutation.isPending || !content.trim() || isUploading}
-              className="bg-metro-green hover:bg-metro-green-light px-6"
-            >
-              {createPostMutation.isPending 
-                ? "Sharing..." 
-                : isUploading
-                  ? "Uploading..."
-                  : "Share"}
-            </Button>
+            {mediaType === "image" && (
+              <img 
+                src={URL.createObjectURL(selectedFile)} 
+                alt="Preview" 
+                className="mt-2 rounded-lg max-h-48 object-contain w-full"
+              />
+            )}
           </div>
+        )}
+        
+        <div className="flex flex-wrap items-center justify-between mt-4 gap-3">
+          <div className="flex items-center flex-wrap gap-2 md:gap-4">
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => triggerFileInput("image")}
+              className="flex items-center gap-2 hover:bg-gray-100 px-2"
+            >
+              <Image className="text-red-500 w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-xs md:text-sm text-metro-dark">Photo</span>
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => triggerFileInput("video")}
+              className="flex items-center gap-2 hover:bg-gray-100 px-2"
+            >
+              <Video className="text-blue-500 w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-xs md:text-sm text-metro-dark">Video</span>
+            </Button>
+            <Button 
+              variant="ghost"
+              size="sm"
+              onClick={() => triggerFileInput("pdf")}
+              className="flex items-center gap-2 hover:bg-gray-100 px-2"
+            >
+              <FileText className="text-red-600 w-4 h-4 md:w-5 md:h-5" />
+              <span className="text-xs md:text-sm text-metro-dark">PDF</span>
+            </Button>
+            
+          </div>
+          
+          <Button 
+            onClick={handleShare}
+            disabled={createPostMutation.isPending || !content.trim() || isUploading}
+            className="bg-metro-green hover:bg-metro-green-light px-4 md:px-6 text-sm md:text-base"
+          >
+            {createPostMutation.isPending 
+              ? "Sharing..." 
+              : isUploading
+                ? "Uploading..."
+                : "Share"}
+          </Button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
 }

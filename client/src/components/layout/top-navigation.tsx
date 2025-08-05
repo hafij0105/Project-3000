@@ -111,9 +111,7 @@ export default function TopNavigation({ onToggleMobileSidebar }: TopNavigationPr
                   onClick={toggleChat}
                 >
                   <MessageCircle className="text-metro-muted" size={20} />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center notification-badge">
-                    2
-                  </span>
+                  
                 </Button>
                 
                 {/* Notifications */}
@@ -124,9 +122,7 @@ export default function TopNavigation({ onToggleMobileSidebar }: TopNavigationPr
                   onClick={toggleNotifications}
                 >
                   <Bell className="text-metro-muted" size={20} />
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center notification-badge">
-                    3
-                  </span>
+                  
                 </Button>
               </div>
               
