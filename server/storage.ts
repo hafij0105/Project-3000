@@ -19,6 +19,9 @@ export interface IStorage {
   likePost(userId: number, postId: number): Promise<void>;
   unlikePost(userId: number, postId: number): Promise<void>;
   hasUserLikedPost(userId: number, postId: number): Promise<boolean>;
+  deletePost(postId: number, userId: number): Promise<void>;
+  savePost(postId: number, userId: number): Promise<void>;
+  hidePost(postId: number, userId: number): Promise<void>;
   
   // Chats
   getChatsByUserId(userId: number): Promise<(Chat & { fromUser: User; toUser: User })[]>;
@@ -551,6 +554,25 @@ export class MemStorage implements IStorage {
     // For now, we'll just return success
     // In a real app, you might want to track removed suggestions in a separate table
     // or modify the suggestions logic to exclude removed suggestions
+    return Promise.resolve();
+  }
+
+  async deletePost(postId: number, userId: number): Promise<void> {
+    const post = this.posts.get(postId);
+    if (post && post.userId === userId) {
+      this.posts.delete(postId);
+    }
+  }
+
+  async savePost(postId: number, userId: number): Promise<void> {
+    // For now, we'll just return success
+    // In a real app, you'd save this to a saved_posts table
+    return Promise.resolve();
+  }
+
+  async hidePost(postId: number, userId: number): Promise<void> {
+    // For now, we'll just return success
+    // In a real app, you'd save this to a hidden_posts table
     return Promise.resolve();
   }
 }

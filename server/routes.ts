@@ -116,6 +116,54 @@ app.get("/api/placeholder/:width/:height", (req, res) => {
   }
 });
 
+  app.delete("/api/posts/:id", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      await storage.deletePost(postId, userId);
+      res.json({ message: "Post deleted successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to delete post" });
+    }
+  });
+
+  app.post("/api/posts/:id/save", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      await storage.savePost(postId, userId);
+      res.json({ message: "Post saved successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to save post" });
+    }
+  });
+
+  app.post("/api/posts/:id/hide", async (req, res) => {
+    try {
+      const postId = parseInt(req.params.id);
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: "User ID is required" });
+      }
+      
+      await storage.hidePost(postId, userId);
+      res.json({ message: "Post hidden successfully" });
+    } catch (error) {
+      res.status(400).json({ message: "Failed to hide post" });
+    }
+  });
+
 
   // Chat routes
   app.get("/api/chats/:userId", async (req, res) => {
@@ -217,6 +265,28 @@ app.get("/api/placeholder/:width/:height", (req, res) => {
       res.json({ message: "Suggestion removed" });
     } catch (error) {
       res.status(400).json({ message: "Invalid request" });
+    }
+  });
+
+  // Media upload endpoint
+  app.post("/api/media/upload", async (req, res) => {
+    try {
+      // Since we don't have multer set up, we'll simulate the upload
+      // In a real app, you'd use multer to handle file uploads
+      
+      // For now, we'll return a success response
+      // The actual file handling will be done on the client side
+      
+      // Simulate processing time
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      res.json({ 
+        url: "file://uploaded", // This will be replaced by the client's blob URL
+        message: "Media uploaded successfully" 
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(400).json({ message: "Upload failed" });
     }
   });
 

@@ -10,6 +10,9 @@ import {
   Play,
   FileText,
   Plus,
+  Trash2,
+  EyeOff,
+  Save,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -17,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Post, User } from "@shared/schema";
 import likeIcon from "@assets/like_1753197457880.webp";
 import { useState, useRef, useEffect } from "react";
+import { authService } from "@/lib/auth";
 
 interface PostCardProps {
   post: Post & { user: User };
@@ -28,12 +32,18 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isLiked, setIsLiked] = useState(post.isLiked ?? false);
+  const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(post.likes ?? 0);
   const [commentInput, setCommentInput] = useState("");
   const [comments, setComments] = useState<string[]>([]);
   const [showShareMenu, setShowShareMenu] = useState(false);
+  const [showOptionsMenu, setShowOptionsMenu] = useState(false);
   const shareButtonRef = useRef<HTMLButtonElement>(null);
+  const optionsButtonRef = useRef<HTMLButtonElement>(null);
+  const currentUser = authService.getCurrentUser();
+  const isOwnPost = currentUser?.id === post.userId;
+  
+
 
   // File upload handlers
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,11 +56,14 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
     fileInputRef.current?.click();
   };
 
-  // Share functionality
+  // Share and Options menu functionality
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (shareButtonRef.current && !shareButtonRef.current.contains(event.target as Node)) {
         setShowShareMenu(false);
+      }
+      if (optionsButtonRef.current && !optionsButtonRef.current.contains(event.target as Node)) {
+        setShowOptionsMenu(false);
       }
     };
 
@@ -64,17 +77,128 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
     setShowShareMenu(!showShareMenu);
   };
 
+  const handleOptions = () => {
+    setShowOptionsMenu(!showOptionsMenu);
+  };
+
   const handleWhatsAppShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(post.content)}`;
+    const shareUrl = `https://web.whatsapp.com/send?text=${encodeURIComponent(post.content)}`;
     window.open(shareUrl, '_blank');
     setShowShareMenu(false);
   };
 
+  const handleDeletePost = async () => {
+    alert("Delete button clicked! Post ID: " + post.id);
+    
+    if (!currentUser) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to delete posts",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    try {
+      const response = await fetch(`/api/posts/${post.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Post deleted",
+          description: "Your post has been deleted"
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      } else {
+        toast({
+          title: "Failed to delete post",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to delete post",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+    setShowOptionsMenu(false);
+  };
+
+  const handleSavePost = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`/api/posts/${post.id}/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Post saved",
+          description: "Post has been saved to your collection"
+        });
+      } else {
+        toast({
+          title: "Failed to save post",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to save post",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+    setShowOptionsMenu(false);
+  };
+
+  const handleHidePost = async () => {
+    if (!currentUser) return;
+    
+    try {
+      const response = await fetch(`/api/posts/${post.id}/hide`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: currentUser.id })
+      });
+      
+      if (response.ok) {
+        toast({
+          title: "Post hidden",
+          description: "Post has been hidden from your feed"
+        });
+        queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
+      } else {
+        toast({
+          title: "Failed to hide post",
+          description: "Please try again",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Failed to hide post",
+        description: "Please try again",
+        variant: "destructive"
+      });
+    }
+    setShowOptionsMenu(false);
+  };
+
   // Like functionality
   const handleLike = () => {
-    setIsLiked((prev) => !prev);
-    setLikesCount((prev) => (isLiked ? prev - 1 : prev + 1));
+    setIsLiked((prev: boolean) => !prev);
+    setLikesCount((prev: number) => (isLiked ? prev - 1 : prev + 1));
     toast({
       title: !isLiked ? "Post liked!" : "Like removed",
       description: !isLiked
@@ -113,7 +237,6 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
             controls
             className="w-full rounded-lg mb-4 max-h-96"
             preload="metadata"
-            poster="/images/sample-thumb.jpg"
           >
             <source src={post.mediaUrl} type="video/mp4" />
             Your browser does not support the video tag.
@@ -172,9 +295,61 @@ export default function PostCard({ post, onMediaUpload }: PostCardProps) {
             <p className="text-sm text-metro-muted">{post.timestamp}</p>
           </div>
         </div>
-        <Button variant="ghost" size="sm">
-          <MoreHorizontal className="text-metro-muted" />
-        </Button>
+        <div className="relative">
+          <Button 
+            ref={optionsButtonRef}
+            variant="ghost" 
+            size="sm"
+            onClick={handleOptions}
+          >
+            <MoreHorizontal className="text-metro-muted" />
+          </Button>
+
+          {showOptionsMenu && (
+            <div 
+              className="absolute top-full right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {isOwnPost ? (
+                // Own post options
+                <>
+                  <div 
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm text-red-600"
+                    onClick={handleDeletePost}
+                  >
+                    <Trash2 size={16} className="mr-3" />
+                    Delete
+                  </div>
+                  <div 
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm text-metro-dark"
+                    onClick={handleSavePost}
+                  >
+                    <Save size={16} className="mr-3" />
+                    Save
+                  </div>
+                </>
+              ) : (
+                // Other people's post options
+                <>
+                  <div 
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm text-metro-dark"
+                    onClick={handleSavePost}
+                  >
+                    <Save size={16} className="mr-3" />
+                    Save
+                  </div>
+                  <div 
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm text-metro-dark"
+                    onClick={handleHidePost}
+                  >
+                    <EyeOff size={16} className="mr-3" />
+                    Hide
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mb-4">

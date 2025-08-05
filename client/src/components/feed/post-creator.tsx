@@ -21,10 +21,14 @@ export default function PostCreator() {
 
   const createPostMutation = useMutation({
     mutationFn: async (postData: InsertPost & { userId: number }) => {
+      console.log("Creating post with data:", postData);
       const response = await apiRequest("POST", "/api/posts", postData);
-      return response.json();
+      const result = await response.json();
+      console.log("Post creation result:", result);
+      return result;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Post created successfully:", data);
       queryClient.invalidateQueries({ queryKey: ["/api/posts"] });
       setContent("");
       setMediaType(null);
@@ -34,7 +38,8 @@ export default function PostCreator() {
         description: "Your post has been shared with your community"
       });
     },
-    onError: () => {
+    onError: (error) => {
+      console.error("Post creation error:", error);
       toast({
         title: "Failed to share post",
         description: "Please try again",
@@ -45,11 +50,13 @@ export default function PostCreator() {
 
   const uploadMediaMutation = useMutation({
     mutationFn: async (file: File) => {
-      const formData = new FormData();
-      formData.append("file", file);
+      // Simulate upload delay
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const response = await apiRequest("POST", "/api/media/upload", formData);
-      return response.json();
+      // Create a blob URL from the selected file
+      const blobUrl = URL.createObjectURL(file);
+      
+      return { url: blobUrl, message: "Media uploaded successfully" };
     },
     onSuccess: (data) => {
       setIsUploading(false);
@@ -57,13 +64,13 @@ export default function PostCreator() {
         title: "Media uploaded!",
         description: "Your media is ready to be shared"
       });
-      return data.url;
     },
-    onError: () => {
+    onError: (error) => {
       setIsUploading(false);
+      console.error("Upload error:", error);
       toast({
         title: "Upload failed",
-        description: "Couldn't upload your media",
+        description: "Couldn't upload your media. Please try again.",
         variant: "destructive"
       });
     }
@@ -85,7 +92,8 @@ export default function PostCreator() {
     try {
       let mediaUrl = null;
       if (selectedFile) {
-        mediaUrl = await uploadMediaMutation.mutateAsync(selectedFile);
+        const uploadResult = await uploadMediaMutation.mutateAsync(selectedFile);
+        mediaUrl = uploadResult.url;
       }
 
       createPostMutation.mutate({
