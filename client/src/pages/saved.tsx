@@ -93,13 +93,21 @@ export default function Saved() {
     setShowShareMenu(showShareMenu === id ? null : id);
   };
 
-  const handleWhatsAppShare = (item: SavedItem) => {
-    const shareText = `${item.title}\n\n${item.content}\n\nShared via MetroCity`;
-    const shareUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-    console.log("WhatsApp Share URL:", shareUrl);
-    window.open(shareUrl, '_blank');
-    setShowShareMenu(null);
-  };
+  const handleWhatsAppShare = (item: SavedItem, e?: React.MouseEvent) => {
+  e?.stopPropagation(); // prevent outer click from closing before this fires
+
+  const shareText = `${item.title}\n\n${item.content}\n\nShared via MetroCity`;
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const shareUrl = isMobile
+    ? `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`
+    : `https://web.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+
+  console.log("WhatsApp Share URL:", shareUrl);
+  window.open(shareUrl, "_blank");
+  setShowShareMenu(null);
+};
+
+
 
   const filteredItems = savedItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -249,7 +257,8 @@ export default function Saved() {
                             >
                               <button
                                 className="w-full text-left px-3 py-2 hover:bg-gray-100 flex items-center text-sm"
-                                onClick={() => handleWhatsAppShare(item)}
+                                onClick={(e) => handleWhatsAppShare(item, e)}
+
                               >
                                 <span className="[&>svg]:h-4 [&>svg]:w-4 [&>svg]:fill-[#128c7e] mr-2">
                                   <svg
@@ -265,10 +274,7 @@ export default function Saved() {
                             </div>
                           )}
                         </div>
-                        <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700">
-                          <Bookmark size={14} className="mr-1" />
-                          Remove
-                        </Button>
+                        
                       </div>
                     </div>
                   </div>
