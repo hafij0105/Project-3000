@@ -48,14 +48,7 @@ export default function ProfileMenu({ onClose, onLogout }: ProfileMenuProps) {
             <User className="text-metro-muted" size={20} />
             <span className="text-metro-dark">Profile</span>
           </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start space-x-3"
-            onClick={onClose}
-          >
-            <Settings className="text-metro-muted" size={20} />
-            <span className="text-metro-dark">Settings</span>
-          </Button>
+          
           <Button
             variant="ghost"
             className="w-full justify-start space-x-3"
@@ -63,14 +56,6 @@ export default function ProfileMenu({ onClose, onLogout }: ProfileMenuProps) {
           >
             <Key className="text-metro-muted" size={20} />
             <span className="text-metro-dark">Change Password</span>
-          </Button>
-          <Button
-            variant="ghost"
-            className="w-full justify-start space-x-3"
-            onClick={onClose}
-          >
-            <HelpCircle className="text-metro-muted" size={20} />
-            <span className="text-metro-dark">Help & Support</span>
           </Button>
         </nav>
         
