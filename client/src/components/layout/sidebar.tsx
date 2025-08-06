@@ -126,18 +126,7 @@ export default function Sidebar({ isMobile = false, isOpen = false, onClose }: S
             <span className="font-medium">Saved</span>
           </Link>
 
-          <Link
-            href="/groups"
-            className={`flex items-center space-x-3 py-3 px-4 rounded-lg transition-all duration-200 ${
-              location === "/groups" 
-                ? "bg-white bg-opacity-15 text-white shadow-lg" 
-                : "text-green-100 hover:bg-white hover:bg-opacity-10 hover:text-white"
-            }`}
-            onClick={isMobile && onClose ? onClose : undefined}
-          >
-            <Groups size={20} />
-            <span className="font-medium">Groups</span>
-          </Link>
+          
 
           <Link
             href="/events"

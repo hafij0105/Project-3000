@@ -114,7 +114,7 @@ export default function Help() {
       title: "Student Services",
       description: "General inquiries and student affairs",
       icon: Phone,
-      contact: "(555) 123-4567",
+      contact: "01715-123456",
       hours: "Mon-Fri, 8 AM - 6 PM"
     }
   ];
